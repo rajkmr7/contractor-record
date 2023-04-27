@@ -1,0 +1,345 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+    id                String  @id @default(cuid())
+    userId            String
+    type              String
+    provider          String
+    providerAccountId String
+    refresh_token     String? @db.Text
+    access_token      String? @db.Text
+    expires_at        Int?
+    token_type        String?
+    scope             String?
+    id_token          String? @db.Text
+    session_state     String?
+    user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+    @@unique([provider, providerAccountId])
+}
+
+model Session {
+    id           String   @id @default(cuid())
+    sessionToken String   @unique
+    userId       String
+    expires      DateTime
+    user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id    String      @id @default(cuid())
+  email String  @unique
+  name  String
+  mobileNumber  String?
+  password String
+  role    Role   @default(None)
+  accounts      Account[]
+    sessions      Session[]
+}
+
+model SaveTimekeeper {
+   id   String   @id
+  contractorid  String?
+  contractorname  String?
+    employeeid String
+    employeename   String?
+    designation String
+    attendancedate String
+    machineInTime String
+    machineOutTime String?
+    machineshift String
+    attendance String
+    overtime String
+    eleave String
+    manualintime String?
+    manualouttime String?
+    manualshift String?
+    manualovertime String?
+    mleave String?
+    department String?
+    gender String?
+}
+
+model TimeKeeper {
+  id   String   @id @default(cuid())
+  contractorid  String?
+  contractorname  String?
+    employeeid String
+    employeename   String?
+    designation String
+    attendancedate String
+    machineInTime String
+    machineOutTime String?
+    machineshift String
+    attendance String
+    overtime String
+    eleave String
+    manualintime String?
+    manualouttime String?
+    manualshift String?
+    manualovertime String?
+    mleave String?
+    department String?
+    gender String?
+    status   Status  @default(NoChanges)
+    comment  Comment[]
+    approvedByTimekeeper Boolean @default(false)
+    UploadDocument Upload[]
+     @@unique([attendancedate, employeeid])
+}
+
+enum Status {
+  Approved
+  Pending
+  Rejected
+  NoChanges
+}
+
+model Contractor {
+  id   String   @id @default(cuid())
+  contractorname      String
+  contractorId       Int    @unique
+  servicedetail      String
+  supplierdetail      String
+  officeaddress      String?
+  contactperson      String
+  designation      String?
+  telephonenumber      String?
+  mobilenumber      String
+  emailid      String?    
+  website      String?
+  bankaccountnumber   String?
+  ifscno      String?
+  businessdetaildocument      String?
+  uploadutilitybill      String?
+  organisationtype      String?
+  dateofincorporation      String?
+  associationwithcompetitor   Boolean @default(false)
+  memorandam_of_associate      String?
+  listofdirector      String?
+  profileofkeyperson      String?
+  competitorname      String?
+  isocertified Boolean   @default(false)
+  turnoverlastyear      String?
+  turnover2yearback      String?
+  uploadbranchdetail      String?
+  uploadreturndetail      String?
+  uniquenumber      String?
+  registration_number      String?
+  first_registration_number      String?
+  latest_mnth_gst1_filed      String?
+  latest_mnth_gst2b_filed      String?
+  comply_regulatory   Boolean   @default(false)
+  upload_registration_cert      String?
+  upload_licence1      String?
+  upload_licence2      String?
+  code_of_proprietor      String?
+  list_major_product      String?
+  qualty_control_procedure      String?
+  valueadd_product      String?
+  five_strength_points      String?
+  weakness      String?
+  selection_training_method      String?
+  delivery_procedure      String?
+  clientele      String?
+  reference_organistaion_1      String?
+  reference_contact_person_1      String?
+  reference_designation_1      String?
+  reference_contact_1      String?
+  period_of_service_1      String?
+  reference_organistaion_2      String?
+  reference_contact_person_2      String?
+  reference_designation_2      String?
+  reference_contact_2      String?
+  period_of_service_2      String?
+  reference_organistaion_3      String?
+  reference_contact_person_3      String?
+  reference_designation_3      String?
+  reference_contact_3      String?
+  period_of_service_3      String?
+  upload_list_ofclientele      String?
+  upload_certificate_services      String?
+  upload_doc1      String?
+  upload_doc2      String?
+  employee        Employee[] 
+  safety         Safety[]
+  stores        Stores[]
+ 
+}
+
+model Employee {
+  id   String   @id @default(cuid())
+    contractorname  String
+    employeeId      Int  @unique
+    employeename String
+    designation String 
+    department String
+    gender String
+    phone String
+    emailid String?
+    basicsalary_in_duration String
+    basicsalary Int
+	allowed_wrking_hr_per_day Int
+    servicecharge Int?
+    gst Int?
+    tds Int?
+    contractorId Int
+    contractor         Contractor     @relation(fields: [contractorId], references: [contractorId], onDelete: Cascade)
+}
+
+model HOAuditor {
+  id  String     @id @default(cuid())
+  contractorId    String
+  contractorname  String
+  workDescription  String
+  invoiceNo      String
+  date          String
+  monthOfInvoice   String
+  fromDate         String
+  toDate           String
+  basicbillamount   Int
+  firstbillormonthly  String
+  serviceCharges    Int
+  totalbillAmount   Int
+  gst               Int
+  netbillAmount     Int
+  bankDetails      String
+  onetimeInvoice   Boolean
+  verifiedComplainces  Boolean
+  workOrderAvailable   Boolean
+  licensesInPlace      Boolean
+  previousMonthPayReceived  Boolean
+  previousPayVerified     Boolean
+  detailsSentToAuditAndHo  Boolean
+  gstChallanAttached      Boolean
+  deductions    String?
+  variationsInManpower   String?
+  manchineOrRegisterMode   String
+  uploadDoc1     String?
+  uploadDoc2     String?
+  uploadDoc3     String?
+  uploadDoc4     String?
+  uploadDoc5     String?
+  uploadDoc6     String?
+}
+
+model payoutTracker {
+  id     String    @id @default(cuid())
+  contractorId   Int
+  contractorName String
+  month          String
+  amount         Int
+  gst            Int
+  tds            Int
+  finalpayableamount Int
+  deduction   Int  @default(0)
+  actualpaidoutmoney  Int @default(0)
+  balance    Int  @default(0)
+  uploadreceipt  String?
+}
+
+model Workorder {
+  id     String     @id @default(cuid())
+  contractorId   String
+  contractorName String
+  nature         String
+  startDate      String
+  endDate        String
+  location       String
+  workDescription String
+  repeatOrOneTime  String
+  alert1Month     Boolean
+  alert15days     Boolean
+  amendmentDocument  String?
+  addendumDocument   String?
+  uploadDocument  String?
+}
+
+model Department {
+  id    String   @id @default(cuid())
+  department  String
+  designations   Designations[]
+}
+
+model Designations {
+  id     String   @id @default(cuid())
+  designationid    String
+  departmentId    String 
+  departmentname    String
+  designation    String
+  basicsalary    Int
+  gender       String
+  allowed_wrking_hr_per_day   Int
+  servicecharge   Int?
+   department         Department     @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+}
+
+model Comment {
+  id   String   @id @default(cuid())
+  comment   String
+  userId    String
+  userName  String
+  role      Role
+  timekeeperId  String
+  timekeeper         TimeKeeper     @relation(fields: [timekeeperId], references: [id], onDelete: Cascade)
+}
+
+model Upload {
+  id   String   @id @default(cuid())
+  document   String
+  userId    String
+  userName  String
+  docType   String?
+  role      Role
+  timekeeperId  String
+  timekeeper         TimeKeeper     @relation(fields: [timekeeperId], references: [id], onDelete: Cascade)
+}
+
+model Stores {
+  id   String   @id @default(cuid())
+  month   String   
+  contractorid   Int
+  contractorName  String
+  division     String
+  chargeableItemIssued  String
+  quantity    Int
+  units  String
+  rate   Int
+  chargeableamount  Int
+  contractor         Contractor     @relation(fields: [contractorid], references: [contractorId], onDelete: Cascade)
+}
+
+model Safety {
+  id   String   @id @default(cuid())
+  month   String   
+  contractorid   Int
+  contractorName  String
+  division     String
+  chargeableItemIssued  String
+  chargeablevoilation   String
+  netchargeableamount   Int
+  contractor         Contractor     @relation(fields: [contractorid], references: [contractorId], onDelete: Cascade)
+}
+
+
+
+enum Role {
+  None
+  TimeKeeper
+  HR
+  PlantCommercial
+  HoCommercialAuditor
+  Corporate
+  Admin
+  Stores
+  Safety
+}
