@@ -15,7 +15,7 @@ import { Contractor, Department } from "@prisma/client";
 import { GetServerSideProps } from "next";
 import { getSession, useSession } from "next-auth/react";
 import prisma from "@/lib/prisma";
-import CustomTable from "@/components/Table/TablePagination";
+import CustomTable from "@/components/Table/Table";
 import ImportData from "@/components/importContractors";
 
 const style = {
@@ -61,6 +61,8 @@ const headCells = [
   createHeadCells("mobilenumber", "Mobile Number", true, false),
   createHeadCells("officeaddress", "Office Address", false, false),
   createHeadCells("website", "Website", false, false),
+  createHeadCells("expirationDate", "Expiration Date", false, false),
+  createHeadCells("servicecharge", "Service Charge", true, false),
   createHeadCells("organisationtype", "Organisation Type", false, false),
   createHeadCells("isocertified", "Is Certified", false, false),
   createHeadCells("uniquenumber", "Unique Number", false, false),
@@ -88,6 +90,14 @@ export default function Contractors({
   const [open, setOpen] = React.useState(false);
   const [value, setValue] = React.useState("");
 
+  // React.useEffect(() => {
+  //   const user = session?.user;
+  //   if(user) {
+  //     user.role = "TimeKeeper";
+  //     session.user = user;
+  //     await session.s
+  //   }
+  // })
   const options = departments.map((d) => ({
     link: `pc${d.department.toLowerCase()}`,
     label: d.department,
@@ -263,14 +273,18 @@ export default function Contractors({
                   onChange={(e) => setValue(e.target.value)}
                 >
                   {options?.map((option) => (
-                    <MenuItem value={option.link}>{option.label}</MenuItem>
+                    <MenuItem value={option.label}>{option.label}</MenuItem>
                   ))}
                 </Select>
               </FormControl>
               <Button
                 variant="contained"
                 disabled={Boolean(!value)}
-                onClick={() => router.push(`/${value}/${contractorId}`)}
+                onClick={() =>
+                  router.push(
+                    `plantcommercial?department=${value}&contractorid=${contractorId}`
+                  )
+                }
               >
                 View Attendance
               </Button>

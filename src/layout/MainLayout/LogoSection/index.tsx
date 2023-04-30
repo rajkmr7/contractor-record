@@ -16,7 +16,7 @@ const LogoSection = () => {
       </Typography> */}
       <img style={{ width: "6rem" }} src="/logo.jpg" alt="logo" />
       <Typography variant="h6" color="#5e35b1" ml={0}>
-        Attandance Management
+        Contractor ERP
       </Typography>
     </Box>
   );

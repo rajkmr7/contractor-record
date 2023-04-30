@@ -1,15 +1,12 @@
 import Close from "@mui/icons-material/Close";
-import {
-  Alert,
-  Button,
-  CircularProgress,
-  IconButton,
-  Snackbar,
-  Stack,
-} from "@mui/material";
+import Alert from "@mui/material/Alert";
+import Button from "@mui/material/Button";
+import CircularProgress from "@mui/material/CircularProgress";
+import IconButton from "@mui/material/IconButton";
+import Snackbar from "@mui/material/Snackbar";
+import Stack from "@mui/material/Stack";
 import axios from "axios";
 import React, { useState } from "react";
-import shortid from "shortid";
 import * as XLSX from "xlsx";
 
 function ImportData() {
@@ -102,24 +99,43 @@ function ImportData() {
         employeename: data.employee_name,
         designation: data.designation,
         department: data.department,
-        machineInTime:
-          new Date(data.machine_intime * 24 * 60 * 60 * 1000)
-            .toLocaleTimeString("en-US", {
-              hour: "2-digit",
-              minute: "2-digit",
-            })
-            ?.toString() || "8:00",
-        machineOutTime:
-          new Date(data.machine_outtime * 24 * 60 * 60 * 1000)
-            .toLocaleTimeString("en-US", {
-              hour: "2-digit",
-              minute: "2-digit",
-            })
-            ?.toString() || "17:00",
+        machineInTime: data.machine_intime
+          ? data.machine_intime === 0
+            ? "00:00"
+            : new Date(data.machine_intime * 24 * 60 * 60 * 1000)
+                .toLocaleTimeString("en-US", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })
+                ?.toString()
+          : "Invalid Entry Time",
+        machineOutTime: data.machine_outtime
+          ? data.machine_outtime === 0
+            ? "00:00"
+            : new Date(data.machine_outtime * 24 * 60 * 60 * 1000)
+                .toLocaleTimeString("en-US", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })
+                ?.toString()
+          : "Invalid Entry Time",
         machineshift: data.shift || "day",
-        attendance: data.attendence?.toString(),
+        attendance: data.attendence?.toString() || "0",
         attendancedate: getDate(data.entry_date)?.toString(),
-        overtime: data.overtime?.toString(),
+        overtime: data.overtime?.toString() || "0",
+        machineduration: data.machine_duration
+          ? data.machine_duration === 0
+            ? "00:00"
+            : new Date(data.machine_duration * 24 * 60 * 60 * 1000)
+                .toLocaleTimeString("en-US", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  second: "2-digit",
+                  hour12: false,
+                  timeZone: "UTC", // or specify the time zone you want to display
+                })
+                ?.toString()
+          : "-",
         eleave: data.e_leave || "0",
         gender: data.gender || "M",
       };
@@ -135,6 +151,7 @@ function ImportData() {
         setError(true);
         handleClick();
       });
+
     setLoading(false);
   };
 

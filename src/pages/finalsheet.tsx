@@ -5,18 +5,26 @@ import getTotalAmountAndRows from "@/utils/get8hr";
 import getColony from "@/utils/getColony";
 import getCCM from "@/utils/getccm";
 import getLRF from "@/utils/getlrf";
-import {
-  Box,
-  Button,
-  CircularProgress,
-  Divider,
-  Paper,
-  Stack,
-  Typography,
-} from "@mui/material";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import CircularProgress from "@mui/material/CircularProgress";
+import Divider from "@mui/material/Divider";
+import Paper from "@mui/material/Paper";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
+// import {
+//   Box,
+//   Button,
+//   CircularProgress,
+//   Divider,
+//   Paper,
+//   Stack,
+//   Typography,
+// } from "@mui/material";
 import {
   Contractor,
   Department,
+  Designations,
   Safety,
   Stores,
   TimeKeeper,
@@ -35,10 +43,12 @@ export default function FinalSheet({
   contractors,
   workorders,
   departments,
+  designations,
 }: {
   contractors: Contractor[];
   workorders: Workorder[];
   departments: Department[];
+  designations: Designations[];
 }) {
   const [value, setValue] = useState<string>(dayjs().format("MM/YYYY"));
   const [selectedContractor, setSelectedContractor] = useState<number>(
@@ -75,43 +85,59 @@ export default function FinalSheet({
       `/api/gettimekeeper?contractor=${selectedContractor}&month=${value}&department=${department}`
     );
 
-    if (department === "8HR" || department === "12HR") {
-      const { rows1, totalnetPayable } = getTotalAmountAndRows(
-        res.data,
-        dayjs(value, "MM/YYYY").month() + 1,
-        dayjs(value, "MM/YYYY").year()
-      );
+    console.log(designations.filter((d) => d.departmentname === department));
 
-      setRows(rows1);
-      setTotalPayable(totalnetPayable);
-    } else if (department === "CCM") {
-      const { rows1, totalnetPayable } = getCCM(
-        res.data,
-        dayjs(value, "MM/YYYY").month() + 1,
-        dayjs(value, "MM/YYYY").year()
-      );
+    console.log(department, res.data);
 
-      setRows(rows1);
-      setTotalPayable(totalnetPayable);
-    } else if (department === "LRF") {
-      const { rows1, totalnetPayable } = getLRF(
-        res.data,
-        dayjs(value, "MM/YYYY").month() + 1,
-        dayjs(value, "MM/YYYY").year()
-      );
+    const { rows1, totalnetPayable } = getTotalAmountAndRows(
+      res.data,
+      dayjs(value, "MM/YYYY").month() + 1,
+      dayjs(value, "MM/YYYY").year(),
+      designations.filter((d) => d.departmentname === department),
+      department
+    );
+    setRows(rows1);
+    console.log(rows1);
 
-      setRows(rows1);
-      setTotalPayable(totalnetPayable);
-    } else {
-      const { rows1, totalnetPayable } = getColony(
-        res.data,
-        dayjs(value, "MM/YYYY").month() + 1,
-        dayjs(value, "MM/YYYY").year()
-      );
+    setTotalPayable(totalnetPayable);
+    // if (department === "8HR" || department === "12HR") {
+    //   const { rows1, totalnetPayable } = getTotalAmountAndRows(
+    //     res.data,
+    //     dayjs(value, "MM/YYYY").month() + 1,
+    //     dayjs(value, "MM/YYYY").year(),
+    //     designations
+    //   );
 
-      setRows(rows1);
-      setTotalPayable(totalnetPayable);
-    }
+    //   setRows(rows1);
+    //   setTotalPayable(totalnetPayable);
+    // } else if (department === "CCM") {
+    //   const { rows1, totalnetPayable } = getCCM(
+    //     res.data,
+    //     dayjs(value, "MM/YYYY").month() + 1,
+    //     dayjs(value, "MM/YYYY").year()
+    //   );
+
+    //   setRows(rows1);
+    //   setTotalPayable(totalnetPayable);
+    // } else if (department === "LRF") {
+    //   const { rows1, totalnetPayable } = getLRF(
+    //     res.data,
+    //     dayjs(value, "MM/YYYY").month() + 1,
+    //     dayjs(value, "MM/YYYY").year()
+    //   );
+
+    //   setRows(rows1);
+    //   setTotalPayable(totalnetPayable);
+    // } else {
+    //   const { rows1, totalnetPayable } = getColony(
+    //     res.data,
+    //     dayjs(value, "MM/YYYY").month() + 1,
+    //     dayjs(value, "MM/YYYY").year()
+    //   );
+
+    //   setRows(rows1);
+    //   setTotalPayable(totalnetPayable);
+    // }
     setTimekeepers(res.data);
     setLoading(false);
   };
@@ -136,6 +162,8 @@ export default function FinalSheet({
     fetchAll();
   }, [selectedContractor, value, department]);
 
+  console.log(store);
+
   // console.log(timekeepers, rows, totalPayable, loading);
 
   const handlePrint = async () => {
@@ -153,7 +181,8 @@ export default function FinalSheet({
       details.payoutracker,
       details.prevMonthAmount,
       details.prevprevMonthAmount,
-      details.prevYearAmount
+      details.prevYearAmount,
+      designations
     );
     // const c = contractors.find((c) => c.contractorId === selectedContractor);
     // const w = workorders.find(
@@ -243,6 +272,9 @@ export default function FinalSheet({
             { label: "Contractor Name", value: f?.contractorname as string },
             { label: "Mobile Number", value: f?.mobilenumber as string },
             { label: "Office Address", value: f?.officeaddress as string },
+            { label: "Pan Number", value: f?.pancardno as string },
+            { label: "Area of Work", value: f?.areaofwork as string },
+            { label: "Type of Contractor", value: "-" },
           ]}
         />
         <Divider sx={{ my: 2 }} />
@@ -275,8 +307,9 @@ export default function FinalSheet({
           rows={rows}
           total={totalPayable}
           department={department}
-          storededuction={store?.chargeableamount || 0}
+          storededuction={store?.totalAmount || 0}
           safetydeduction={safety?.netchargeableamount || 0}
+          designations={designations}
         />
       )}
       <Divider sx={{ my: 2 }} />
@@ -343,8 +376,9 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   const contractors = await prisma.contractor.findMany();
   const workorders = await prisma.workorder.findMany();
   const departments = await prisma.department.findMany();
+  const designations = await prisma.designations.findMany();
 
   return {
-    props: { contractors, workorders, departments },
+    props: { contractors, workorders, departments, designations },
   };
 };

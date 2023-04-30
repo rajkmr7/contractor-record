@@ -109,9 +109,11 @@ const CustomTable = (props: Props) => {
         />
         <TableContainer
           sx={{
+            maxHeight: 450,
             scrollBehavior: "smooth",
             "&::-webkit-scrollbar": {
               height: 10,
+              width: 10,
             },
             "&::-webkit-scrollbar-thumb": {
               backgroundColor: "#bdbdbd",
@@ -120,6 +122,7 @@ const CustomTable = (props: Props) => {
           }}
         >
           <Table
+            stickyHeader
             sx={{ minWidth: 750 }}
             aria-labelledby="tableTitle"
             size="medium"
@@ -170,8 +173,9 @@ const CustomTable = (props: Props) => {
                           >
                             {_.get(row, headCell.id) === true && "Yes"}
                             {_.get(row, headCell.id) === false && "No"}
-                            {typeof _.get(row, headCell.id) !== "boolean" &&
-                              _.get(row, headCell.id)}
+                            {(typeof _.get(row, headCell.id) !== "boolean" &&
+                              _.get(row, headCell.id, "-")) ||
+                              "-"}
                           </TableCell>
                         ))}
                       {props.setContractorId && props.setOpen && (

@@ -47,36 +47,6 @@ export default function FinalSheetTable({
   storededuction: number;
   safetydeduction: number;
 }) {
-  const downloadTxtFile = () => {
-    // Convert JSON data to formatted string
-    const jsonRows = JSON.stringify(rows, null, 2);
-    const tableRows = [
-      ["Name".padEnd(30), "Age".padEnd(30), "Email".padEnd(10)],
-    ];
-    rows.forEach((item) => {
-      tableRows.push([
-        item.date.padEnd(30),
-        String(item.m8).toString().padEnd(3),
-        item.f8.toString().padEnd(25),
-      ]);
-    });
-    const tableRowsString = tableRows.map((row) => row.join("\t")).join("\n");
-    const txtContent = `JSON data:\n${jsonRows}\n\nTable data:\n${tableRowsString}`;
-
-    // Download text file
-    const blob = new Blob([txtContent], {
-      type: "text/plain;charset=utf-8;",
-    });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", "data.txt");
-    link.style.visibility = "hidden";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
   const headers = [
     "Total Man days",
     "Rate",
@@ -162,11 +132,12 @@ export default function FinalSheetTable({
               department === "Colony"
                 ? headers
                 : ccmheader
-              ).map((header) => (
+              ).map((header, index) => (
                 <TableCell
                   align="center"
                   sx={{ fontWeight: "700" }}
                   colSpan={1}
+                  key={index}
                 >
                   {header}
                 </TableCell>
@@ -182,7 +153,7 @@ export default function FinalSheetTable({
                 {item.sub && <TableCell align="center">{item.sub}</TableCell>}
                 {rows.map((row, index) => (
                   <TableCell key={index} align="center">
-                    {Math.floor(_.get(row, item.id))}
+                    {Math.floor(_.get(row, item.id)) || 0}
                   </TableCell>
                 ))}
               </TableRow>
@@ -209,9 +180,7 @@ export default function FinalSheetTable({
               <TableCell colSpan={5} sx={{ fontWeight: "600" }}>
                 Safety Voilation's Penality
               </TableCell>
-              <TableCell align="center">
-                {total > 0 ? safetydeduction : "0"}
-              </TableCell>
+              <TableCell align="center">{safetydeduction}</TableCell>
             </TableRow>
             <TableRow>
               <TableCell />
@@ -219,7 +188,7 @@ export default function FinalSheetTable({
               <TableCell colSpan={5} sx={{ fontWeight: "600" }}>
                 Consumables / Rechargeable Items
               </TableCell>
-              <TableCell align="center">0</TableCell>
+              <TableCell align="center">{storededuction}</TableCell>
             </TableRow>
             <TableRow>
               <TableCell />
@@ -235,9 +204,7 @@ export default function FinalSheetTable({
               <TableCell colSpan={5} sx={{ fontWeight: "600" }}>
                 Any Other Deductions
               </TableCell>
-              <TableCell align="center">
-                {total > 0 ? storededuction : "0"}
-              </TableCell>
+              <TableCell align="center">{0}</TableCell>
             </TableRow>
             <TableRow>
               <TableCell />

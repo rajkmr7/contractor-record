@@ -26,17 +26,17 @@ import { getSession } from "next-auth/react";
 import prisma from "@/lib/prisma";
 import { Contractor } from "@prisma/client";
 import { CircularProgress } from "@mui/material";
+import FormDate from "@/components/FormikComponents/FormDate";
+import dayjs from "dayjs";
 // import { Contractor } from "@prisma/client"
 
 const fileType = Yup.object().required("Required").optional();
 
 const stringtype = Yup.string().required("Required").optional();
 
-const numberType = Yup.number()
-  .required("Required")
-  .transform((value, originalValue) => {
-    return originalValue === "" ? null : value;
-  });
+const numberType = Yup.number().transform((value, originalValue) => {
+  return originalValue !== "" ? null : value;
+});
 
 const validationSchema = Yup.object().shape({
   contractorname: Yup.string().required("Required"),
@@ -49,11 +49,15 @@ const validationSchema = Yup.object().shape({
   contactperson: Yup.string().required("Required"),
   designation: Yup.string().required("Required"),
   telephonenumber: numberType.nullable(),
-  mobilenumber: numberType,
+  mobilenumber: Yup.number().required("Rquired"),
   emailid: stringtype,
   website: stringtype,
+  expirationDate: stringtype,
+  servicecharge: Yup.number().required("Rquired"),
   bankaccountnumber: stringtype.required("Required"),
   ifscno: stringtype.required("Required"),
+  pancardno: stringtype,
+  areaofwork: stringtype,
   // Organsiation Details
   organisationtype: stringtype,
   dateofincorporation: stringtype,
@@ -67,9 +71,9 @@ const validationSchema = Yup.object().shape({
   turnover2yearback: stringtype,
   uploadbranchdetail: fileType,
   uploadreturndetail: fileType,
-  uniquenumber: numberType.nullable(),
-  registration_number: numberType.nullable(),
-  first_registration_number: numberType.nullable(),
+  uniquenumber: numberType.nullable().optional(),
+  registration_number: numberType.nullable().optional(),
+  first_registration_number: numberType.nullable().optional(),
   latest_mnth_gst1_filed: stringtype,
   latest_mnth_gst2b_filed: stringtype,
   comply_regulatory: stringtype,
@@ -128,10 +132,14 @@ export default function EditContractor({
     officeaddress: contractor?.officeaddress || "",
     contactperson: contractor?.contactperson || "",
     designation: contractor?.designation || "",
-    telephonenumber: contractor?.telephonenumber || null,
+    telephonenumber: contractor?.telephonenumber || "",
     mobilenumber: contractor?.mobilenumber || 0,
     emailid: contractor?.emailid || "",
     website: contractor?.website || "",
+    pancardno: contractor?.pancardno || "",
+    areaofwork: contractor?.areaofwork || "",
+    expirationDate: contractor?.expirationDate || "",
+    servicecharge: contractor?.servicecharge || 0,
     bankaccountnumber: contractor?.bankaccountnumber || "",
     ifscno: contractor?.ifscno || "",
     organisationtype: contractor?.organisationtype || "",
@@ -146,9 +154,9 @@ export default function EditContractor({
     turnover2yearback: contractor?.turnover2yearback || "",
     uploadbranchdetail: undefined,
     uploadreturndetail: undefined,
-    uniquenumber: contractor?.uniquenumber || null,
-    registration_number: contractor?.registration_number || null,
-    first_registration_number: contractor?.first_registration_number || null,
+    uniquenumber: contractor?.uniquenumber || "",
+    registration_number: contractor?.registration_number || "",
+    first_registration_number: contractor?.first_registration_number || "",
     latest_mnth_gst1_filed: contractor?.latest_mnth_gst1_filed || "",
     latest_mnth_gst2b_filed: contractor?.latest_mnth_gst2b_filed || "",
     comply_regulatory: contractor?.comply_regulatory || "",
@@ -272,8 +280,6 @@ export default function EditContractor({
           }}
         >
           {({ handleSubmit, errors, values, isSubmitting }) => {
-            console.log(errors);
-            console.log(values);
             return (
               <form noValidate onSubmit={handleSubmit}>
                 <Stack spacing={0}>
@@ -369,6 +375,40 @@ export default function EditContractor({
                         name="website"
                         label="Website"
                         placeHolder="Enter Website"
+                        disabled={false}
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={4}>
+                      <FormDate
+                        name="expirationDate"
+                        label="Expiration Date*"
+                        placeHolder="Enter Expiration Date"
+                        disabled={false}
+                        minDate={dayjs()}
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={4}>
+                      <FormInput
+                        name="servicecharge"
+                        label="Service Charge*"
+                        placeHolder="Enter the Service Charge"
+                        disabled={false}
+                        type="number"
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={4}>
+                      <FormInput
+                        name="pancardno"
+                        label="Pan Card Number*"
+                        placeHolder="Enter Pan Card Number"
+                        disabled={false}
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={4}>
+                      <FormInput
+                        name="areaofwork"
+                        label="Area of Work*"
+                        placeHolder="Enter Area of Work"
                         disabled={false}
                       />
                     </Grid>

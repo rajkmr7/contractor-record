@@ -1,67 +1,6 @@
 import * as React from "react";
-import Paper from "@mui/material/Paper";
-import Table from "@mui/material/Table";
-import TableBody from "@mui/material/TableBody";
-import TableCell from "@mui/material/TableCell";
-import TableContainer from "@mui/material/TableContainer";
-import TableHead from "@mui/material/TableHead";
-import TableRow from "@mui/material/TableRow";
 import FinalSheetTable from "./finalsheettable";
-import { Stores } from "@prisma/client";
-
-interface Column {
-  id:
-    | "date"
-    | "ele"
-    | "lco"
-    | "tman"
-    | "filter"
-    | "po"
-    | "bco"
-    | "srfilter"
-    | "incharge"
-    | "mo"
-    | "shiftinch"
-    | "gc"
-    | "svr"
-    | "sbo"
-    | "lman"
-    | "forman"
-    | "tmesson"
-    | "lmes"
-    | "jrele"
-    | "helper"
-    | "total";
-  label: string;
-  border?: boolean;
-  minWidth?: number;
-  align?: "right" | "center" | "left";
-  format?: (value: number) => string;
-}
-
-interface Data {
-  date: string;
-  ele: number;
-  lco: number;
-  tman: number;
-  filter: number;
-  po: number;
-  bco: number;
-  srfilter: number;
-  incharge: number;
-  mo: number;
-  shiftinch: number;
-  gc: number;
-  tmesson: number;
-  svr: number;
-  sbo: number;
-  lmes: number;
-  lman: number;
-  forman: number;
-  jrele: number;
-  helper: number;
-  total: number;
-}
+import { Designations } from "@prisma/client";
 
 export default function FinalSheetta({
   rows,
@@ -69,13 +8,33 @@ export default function FinalSheetta({
   department,
   storededuction,
   safetydeduction,
+  designations,
 }: {
   rows: any[];
   total: number;
   department: string;
   storededuction: number;
   safetydeduction: number;
+  designations: Designations[];
 }) {
+  const s8hr = designations.map((d) => {
+    if (d.gender === "Male")
+      return { main: d.designation, sub: "M", id: d.designationid };
+    else if (d.gender === "Female")
+      return { main: d.designation, sub: "F", id: d.designationid };
+    else return { main: d.designation, id: d.designationid };
+  });
+
+  const sidebar = designations
+    .filter((d) => d.departmentname === department)
+    .map((d) => {
+      if (d.gender === "Male")
+        return { main: d.designation, sub: "M", id: d.designationid };
+      else if (d.gender === "Female")
+        return { main: d.designation, sub: "F", id: d.designationid };
+      else return { main: d.designation, id: d.designationid };
+    });
+
   const side8hr = [
     { main: "8MW", sub: "M", id: "m8" },
     { main: "8MW", sub: "F", id: "f8" },
@@ -128,59 +87,87 @@ export default function FinalSheetta({
   const sidecolony = [
     { main: "Colony", sub: "Male", id: "m" },
     { main: "Colony", sub: "Female", id: "f" },
-    { main: "Total", sub: " ", id: "total" },
+    // { main: "Total", sub: " ", id: "total" },
   ];
 
+  if (department === "Colony") {
+    sidebar.push(...sidecolony);
+  }
+
   switch (department) {
-    case "CCM":
-      return (
-        <FinalSheetTable
-          rows={rows}
-          total={Math.floor(total || 0)}
-          department={department}
-          sides={sideccm}
-          storededuction={storededuction}
-          safetydeduction={safetydeduction}
-        />
-      );
-      break;
-    case "LRF":
-      return (
-        <FinalSheetTable
-          rows={rows}
-          total={Math.floor(total || 0)}
-          department={department}
-          sides={sidelrf}
-          storededuction={storededuction}
-          safetydeduction={safetydeduction}
-        />
-      );
-      break;
-    case "Colony":
-      return (
-        <FinalSheetTable
-          rows={rows}
-          total={Math.floor(total || 0)}
-          department={department}
-          sides={sidecolony}
-          storededuction={storededuction}
-          safetydeduction={safetydeduction}
-        />
-      );
-      break;
     case "8HR":
     case "12HR":
-      return (
-        <FinalSheetTable
-          rows={rows}
-          total={Math.floor(total || 0)}
-          department={department}
-          sides={side8hr}
-          storededuction={storededuction}
-          safetydeduction={safetydeduction}
-        />
-      );
+    case "Colony":
+      sidebar.push({ main: "Total", sub: " ", id: "total" });
+      break;
+    case "CCM":
+    case "LRF":
+      sidebar.push({ main: "Total", id: "total" });
+      break;
     default:
-      return <></>;
+      break;
   }
+
+  // switch (department) {
+  //   case "CCM":
+  //     return (
+  //       <FinalSheetTable
+  //         rows={rows}
+  //         total={Math.floor(total || 0)}
+  //         department={department}
+  //         sides={sideccm}
+  //         storededuction={storededuction}
+  //         safetydeduction={safetydeduction}
+  //       />
+  //     );
+  //     break;
+  //   case "LRF":
+  //     return (
+  //       <FinalSheetTable
+  //         rows={rows}
+  //         total={Math.floor(total || 0)}
+  //         department={department}
+  //         sides={sidelrf}
+  //         storededuction={storededuction}
+  //         safetydeduction={safetydeduction}
+  //       />
+  //     );
+  //     break;
+  //   case "Colony":
+  //     return (
+  //       <FinalSheetTable
+  //         rows={rows}
+  //         total={Math.floor(total || 0)}
+  //         department={department}
+  //         sides={sidecolony}
+  //         storededuction={storededuction}
+  //         safetydeduction={safetydeduction}
+  //       />
+  //     );
+  //     break;
+  //   case "8HR":
+  //   case "12HR":
+  //     return (
+  //       <FinalSheetTable
+  //         rows={rows}
+  //         total={Math.floor(total || 0)}
+  //         department={department}
+  //         sides={s8hr}
+  //         storededuction={storededuction}
+  //         safetydeduction={safetydeduction}
+  //       />
+  //     );
+  //   default:
+  //     return <></>;
+  // }
+  return (
+    <FinalSheetTable
+      rows={rows}
+      total={Math.floor(total || 0)}
+      department={department}
+      sides={sidebar}
+      storededuction={storededuction}
+      safetydeduction={safetydeduction}
+    />
+  );
 }

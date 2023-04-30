@@ -34,12 +34,12 @@ import axios from "axios";
 import { getSession, useSession } from "next-auth/react";
 import { GetServerSideProps } from "next";
 import prisma from "@/lib/prisma";
-import { FormSelect } from "./pc8hr/[id]";
 import EnhancedTableHead from "@/components/Table/EnhancedTableHead";
 import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs, { Dayjs } from "dayjs";
 import ImportData from "@/components/import";
+import FormSelect from "@/ui-component/FormSelect";
 
 const style = {
   position: "absolute",
@@ -107,6 +107,7 @@ const headCells = [
   createHeadCells("employeename", "Employee Name", false, false),
   createHeadCells("machineintime", "Machine In Time", false, false),
   createHeadCells("machineouttime", "Machine Out Time", false, false),
+  createHeadCells("machineduration", "Machine Total Duration", false, false),
   createHeadCells("machineshift", "Machine Shift", false, false),
   createHeadCells("attendance", "Attendance", true, false),
   createHeadCells("attendancedance", "Attendance Date", true, false),
@@ -114,6 +115,7 @@ const headCells = [
   createHeadCells("machineleave", "Machine Leave", true, false),
   createHeadCells("manualintime", "Manual In Time", false, false),
   createHeadCells("manualouttime", "Manual Out Time", false, false),
+  createHeadCells("manualduration", "Manual Total Duration", false, false),
   createHeadCells("manualshift", "Manual Shift", false, false),
   createHeadCells("manualovertime", "Manual Over Time", true, false),
   createHeadCells("manualleave", "Manual Leave", true, false),
@@ -125,6 +127,7 @@ const headCells = [
   ),
   createHeadCells("designation", "Designation", false, false),
   createHeadCells("gender", "Gender", false, false),
+  createHeadCells("status", "Status", false, false),
   createHeadCells("comment", "Comment", false, false),
   createHeadCells("uploaddocument", "Upload Document", false, false),
 ];
@@ -186,7 +189,7 @@ function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
                 ...contractors,
               ]}
               value={contractorName}
-              setValue={setContractorName}
+              handleChange={(e) => setContractorName(e as string)}
             />
           </Box>
           <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -207,11 +210,6 @@ function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
           </IconButton>
         </Tooltip>
       ) : (
-        // <Tooltip title="Filter list">
-        //   <IconButton>
-        //     <FilterListIcon />
-        //   </IconButton>
-        // </Tooltip>
         <Stack direction="row" spacing={2}>
           <ImportData />
           {value.month() < dayjs().month() &&
@@ -227,16 +225,14 @@ function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
   );
 }
 
-export default function TimeKeeperTable({
-  contractors,
-}: {
-  contractors: Contractor[];
+export default function TimeKeeperTable({}: // contractors,
+{
+  // contractors: Contractor[];
 }) {
   const [order, setOrder] = React.useState<Order>("asc");
   const [orderBy, setOrderBy] = React.useState<keyof TimeKeeper>("employeeid");
   const [selected, setSelected] = React.useState<readonly string[]>([]);
   const [page, setPage] = React.useState(0);
-  const [dense, setDense] = React.useState(false);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
   const router = useRouter();
   const [timekeeper, setTimeKepeer] = React.useState<TimeKeeper[]>([]);
@@ -244,14 +240,11 @@ export default function TimeKeeperTable({
   const [open, setOpen] = React.useState(false);
   const [open1, setOpen1] = React.useState(false);
   const [selected1, setSelected1] = React.useState<Comment[] | Upload[]>();
+  const [contractors, setContractors] = React.useState<Contractor[]>([]);
   const matches = useMediaQuery("(min-width:600px)");
   const [contractorName, setContractorName] = React.useState("all");
   const [value, setValue] = React.useState<Dayjs>(dayjs());
   const { data: session } = useSession();
-  const [excelFile, setExcelFile] = React.useState<string | ArrayBuffer | null>(
-    null
-  );
-  const [excelFileError, setExcelFileError] = React.useState<string | null>("");
 
   const headcell1 = createHeadCells("status", "Status", false, true);
   const headcell2 = createHeadCells("action", "Action", false, true);
@@ -310,8 +303,22 @@ export default function TimeKeeperTable({
       });
   };
 
+  const fetchContrators = async () => {
+    await axios
+      .get("/api/hr/contractors")
+      .then((res) => {
+        const contractors = res.data;
+        setContractors(contractors);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  };
+
   const fetchTimeKeeper = async () => {
-    setLoading(true);
+    if (timekeeper.length === 0) {
+      setLoading(true);
+    }
 
     await axios
       .get(
@@ -332,7 +339,11 @@ export default function TimeKeeperTable({
 
   React.useEffect(() => {
     fetchTimeKeeper();
-  }, [value]);
+  }, [value, session]);
+
+  React.useEffect(() => {
+    fetchContrators();
+  }, []);
 
   const handleSelectAllClick = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.checked) {
@@ -370,6 +381,18 @@ export default function TimeKeeperTable({
     setSelected(newSelected);
   };
 
+  const decimalTime = 0.5416666666666666;
+  const milliseconds = decimalTime * 24 * 60 * 60 * 1000;
+  const time = new Date(milliseconds).toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+    timeZone: "UTC", // or specify the time zone you want to display
+  });
+
+  console.log(time); // Output: "13:00:00"
+
   const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage);
   };
@@ -383,24 +406,23 @@ export default function TimeKeeperTable({
 
   const isSelected = (contractorname: string) =>
     selected.indexOf(contractorname) !== -1;
-  console.log(timekeeper.find((t) => !t.approvedByTimekeeper));
-  console.log(timekeeper.find((t) => t.status === "Pending"));
 
   const showApprove = () => {
     const timekeeper1 = timekeeper.filter(
       (t) => t.contractorname === contractorName || contractorName === "all"
     );
     if (session?.user?.role === "TimeKeeper") {
-      console.log("there");
       if (timekeeper1.find((t) => !t.approvedByTimekeeper)) {
-        console.log("here");
-
         return timekeeper1.find((t) => t.status === "Pending") ? false : true;
       } else return false;
     } else return false;
   };
-
-  console.log(timekeeper);
+  //  const d = new Date("00:00" * 24 * 60 * 60 * 1000)
+  //   .toLocaleTimeString("en-US", {
+  //     hour: "2-digit",
+  //     minute: "2-digit",
+  //   })
+  //   ?.toString();
 
   return (
     <Box sx={{ width: "100%" }}>
@@ -440,9 +462,11 @@ export default function TimeKeeperTable({
 
           <TableContainer
             sx={{
+              maxHeight: 470,
               scrollBehavior: "smooth",
               "&::-webkit-scrollbar": {
                 height: 10,
+                width: 10,
               },
               "&::-webkit-scrollbar-thumb": {
                 backgroundColor: "#bdbdbd",
@@ -451,6 +475,7 @@ export default function TimeKeeperTable({
             }}
           >
             <Table
+              stickyHeader
               sx={{ minWidth: 750 }}
               aria-labelledby="tableTitle"
               size="medium"
@@ -477,6 +502,7 @@ export default function TimeKeeperTable({
                   ) as any,
                   getComparator(order, orderBy)
                 )
+                  .filter((t) => t.status !== "Pending")
                   .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                   .map((row, index) => {
                     const isItemSelected = isSelected(row.employeeid as string);
@@ -510,6 +536,9 @@ export default function TimeKeeperTable({
                         <TableCell align="left">{row.machineInTime}</TableCell>
                         <TableCell align="left">{row.machineOutTime}</TableCell>
                         <TableCell align="left">
+                          {row.machineduration || "-"}
+                        </TableCell>
+                        <TableCell align="left">
                           {row.machineshift || "-"}
                         </TableCell>
                         <TableCell align="left">
@@ -529,6 +558,9 @@ export default function TimeKeeperTable({
                           {row.manualouttime || "-"}
                         </TableCell>
                         <TableCell align="left">
+                          {row.manualduration || "-"}
+                        </TableCell>
+                        <TableCell align="left">
                           {row.manualshift || "-"}
                         </TableCell>
                         <TableCell align="left">
@@ -542,6 +574,7 @@ export default function TimeKeeperTable({
                           {row.designation || "-"}
                         </TableCell>
                         <TableCell align="left">{row.gender || "-"}</TableCell>
+                        <TableCell align="left">{row.status || "-"}</TableCell>
                         <TableCell
                           align="left"
                           onClick={() => handleOpen1(row.id as string)}
@@ -605,7 +638,7 @@ export default function TimeKeeperTable({
                       contractorName === "all"
                   ) as any,
                   getComparator(order, orderBy)
-                ).length === 0 && (
+                ).filter((t) => t.status !== "Pending").length === 0 && (
                   <TableRow
                     style={{
                       height: 50,
@@ -623,8 +656,9 @@ export default function TimeKeeperTable({
             count={
               timekeeper.filter(
                 (t) =>
-                  t.contractorname === contractorName ||
-                  contractorName === "all"
+                  (t.contractorname === contractorName ||
+                    contractorName === "all") &&
+                  t.status !== "Pending"
               ).length
             }
             rowsPerPage={rowsPerPage}
@@ -799,11 +833,8 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     };
   }
 
-  const contractors = await prisma.contractor.findMany();
   return {
-    props: {
-      contractors,
-    },
+    props: {},
   };
 };
 

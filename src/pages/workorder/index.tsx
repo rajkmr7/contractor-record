@@ -15,15 +15,28 @@ import Checkbox from "@mui/material/Checkbox";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 import DeleteIcon from "@mui/icons-material/Delete";
+import Edit from "@mui/icons-material/Edit";
 import FilterListIcon from "@mui/icons-material/FilterList";
+import CircularProgress from "@mui/material/CircularProgress";
 import Search from "@mui/icons-material/Search";
-import { InputAdornment, OutlinedInput, styled } from "@mui/material";
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  InputAdornment,
+  OutlinedInput,
+  styled,
+} from "@mui/material";
 import { useRouter } from "next/router";
 import { GetServerSideProps } from "next";
 import { getSession } from "next-auth/react";
 import prisma from "@/lib/prisma";
 import { Workorder } from "@prisma/client";
 import EnhancedTableHead from "@/components/Table/EnhancedTableHead";
+import axios from "axios";
+import Close from "@mui/icons-material/Close";
 
 const StyledSearch = styled(OutlinedInput)(({ theme }) => ({
   width: 300,
@@ -140,6 +153,7 @@ const createHeadCells = (
 };
 
 const headCells = [
+  createHeadCells("id", "Work Order Id", false, false),
   createHeadCells("contractorname", "Contractor Name", false, false),
   createHeadCells("nature", "Nature", false, true),
   createHeadCells("startdate", "Start Date", false, false),
@@ -291,15 +305,15 @@ export default function Employees({ workorder }: { workorder: Workorder[] }) {
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
   const [filterName, setFilterName] = React.useState("");
   const router = useRouter();
-  console.log(workorder);
+  const [open, setOpen] = React.useState(false);
+  const [loading, setLoading] = React.useState(false);
+  const [selectedWorkorder, setSelectedWorkorder] = React.useState<
+    string | undefined
+  >(undefined);
 
-  const handleRequestSort = (
-    event: React.MouseEvent<unknown>,
-    property: keyof Data1
-  ) => {
-    const isAsc = orderBy === property && order === "asc";
-    setOrder(isAsc ? "desc" : "asc");
-    setOrderBy(property);
+  const handleClose = () => {
+    setOpen(false);
+    setSelectedWorkorder(undefined);
   };
 
   const handleSelectAllClick = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -345,12 +359,22 @@ export default function Employees({ workorder }: { workorder: Workorder[] }) {
     setPage(0);
   };
 
-  const handleChangeDense = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setDense(event.target.checked);
-  };
-
   const isSelected = (contractorName: string) =>
     selected.indexOf(contractorName) !== -1;
+
+  const deleteWorkorder = async (id: string) => {
+    setLoading(true);
+    const res = await axios
+      .delete("/api/workorder", { data: { id: id } })
+      .then((res) => {
+        router.replace(router.asPath);
+        setOpen(false);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+    setLoading(false);
+  };
 
   // Avoid a layout jump when reaching the last page with empty rows.
   const emptyRows =
@@ -366,9 +390,11 @@ export default function Employees({ workorder }: { workorder: Workorder[] }) {
         />
         <TableContainer
           sx={{
+            maxHeight: 440,
             scrollBehavior: "smooth",
             "&::-webkit-scrollbar": {
               height: 10,
+              width: 9,
             },
             "&::-webkit-scrollbar-thumb": {
               backgroundColor: "#bdbdbd",
@@ -396,17 +422,12 @@ export default function Employees({ workorder }: { workorder: Workorder[] }) {
                 )
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((row, index) => {
-                  const isItemSelected = isSelected(
-                    row.contractorName as string
-                  );
+                  const isItemSelected = isSelected(row.id as string);
                   const labelId = `enhanced-table-checkbox-${index}`;
 
                   return (
                     <TableRow
                       hover
-                      onClick={(event) =>
-                        handleClick(event, row.contractorName as string)
-                      }
                       role="checkbox"
                       aria-checked={isItemSelected}
                       tabIndex={-1}
@@ -416,6 +437,9 @@ export default function Employees({ workorder }: { workorder: Workorder[] }) {
                     >
                       <TableCell padding="checkbox">
                         <Checkbox
+                          onClick={(event) =>
+                            handleClick(event, row.id as string)
+                          }
                           color="primary"
                           checked={isItemSelected}
                           inputProps={{
@@ -430,6 +454,9 @@ export default function Employees({ workorder }: { workorder: Workorder[] }) {
                         align="center"
                         sx={{ minWidth: 150 }}
                       >
+                        {row.id}
+                      </TableCell>
+                      <TableCell align="center" sx={{ minWidth: 150 }}>
                         {row.contractorName}
                       </TableCell>
                       <TableCell align="center" sx={{ minWidth: 150 }}>
@@ -481,14 +508,25 @@ export default function Employees({ workorder }: { workorder: Workorder[] }) {
                         View Document
                       </TableCell>
 
-                      {/* <TableCell size="small" align="center">
+                      <TableCell size="small" align="center">
                         <IconButton
                           onClick={() => router.push(`/workorder/${row.id}`)}
                           sx={{ m: 0 }}
                         >
                           <Edit fontSize="small" />
                         </IconButton>
-                      </TableCell> */}
+                      </TableCell>
+                      <TableCell size="small" align="center">
+                        <IconButton
+                          onClick={() => {
+                            setOpen(true);
+                            setSelectedWorkorder(row.id);
+                          }}
+                          sx={{ m: 0 }}
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </TableCell>
                     </TableRow>
                   );
                 })}
@@ -514,6 +552,37 @@ export default function Employees({ workorder }: { workorder: Workorder[] }) {
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
       </Paper>
+      <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ m: 1, fontSize: "1rem" }}>
+          Confirm the action
+        </DialogTitle>
+        <Box position="absolute" top={0} right={0}>
+          <IconButton onClick={handleClose}>
+            <Close />
+          </IconButton>
+        </Box>
+        <DialogContent>
+          <Typography>
+            Are you sure, you want to delete selected stream
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ m: 1 }}>
+          <Button color="primary" variant="outlined" onClick={handleClose}>
+            Cancel
+          </Button>
+          <Button
+            color="secondary"
+            onClick={() => deleteWorkorder(selectedWorkorder as string)}
+            variant="contained"
+            disabled={loading}
+          >
+            Confirm
+            {loading && (
+              <CircularProgress size={15} sx={{ ml: 1, color: "#364152" }} />
+            )}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

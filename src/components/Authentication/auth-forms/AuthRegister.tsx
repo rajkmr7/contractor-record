@@ -2,21 +2,18 @@ import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 
 // material-ui
-import { useTheme } from "@mui/material/styles";
-import {
-  Box,
-  Button,
-  CircularProgress,
-  FormControl,
-  FormHelperText,
-  Grid,
-  IconButton,
-  InputAdornment,
-  InputLabel,
-  OutlinedInput,
-  Typography,
-  useMediaQuery,
-} from "@mui/material";
+import { useTheme } from "@mui/material";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import CircularProgress from "@mui/material/CircularProgress";
+import FormControl from "@mui/material/FormControl";
+import FormHelperText from "@mui/material/FormHelperText";
+import Grid from "@mui/material/Grid";
+import IconButton from "@mui/material/IconButton";
+import InputAdornment from "@mui/material/InputAdornment";
+import InputLabel from "@mui/material/InputLabel";
+import OutlinedInput from "@mui/material/OutlinedInput";
+import useMediaQuery from "@mui/material/useMediaQuery";
 
 // third party
 import * as Yup from "yup";
@@ -83,10 +80,9 @@ const FirebaseRegister = ({ ...others }) => {
             .max(255)
             .required("Email is required"),
           password: Yup.string().max(255).required("Password is required"),
-          confirmPassword: Yup.string().oneOf(
-            [Yup.ref("password"), undefined],
-            "Passwords must match"
-          ),
+          confirmPassword: Yup.string()
+            .oneOf([Yup.ref("password"), undefined], "Passwords must match")
+            .required("Required"),
         })}
         onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
           await axios
@@ -97,6 +93,8 @@ const FirebaseRegister = ({ ...others }) => {
               mobileNumber: values.mobileNumber.toString(),
             })
             .then((res) => {
+              console.log("called");
+
               router.push("/admin");
             })
             .catch((err) => {

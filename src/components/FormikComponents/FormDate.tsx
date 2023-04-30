@@ -3,16 +3,13 @@ import { DemoContainer } from "@mui/x-date-pickers/internals/demo";
 import dayjs, { Dayjs } from "dayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { DateField } from "@mui/x-date-pickers/DateField";
-import {
-  FormControl,
-  FormHelperText,
-  FormLabel,
-  InputProps,
-  TextField,
-} from "@mui/material";
+import FormControl from "@mui/material/FormControl";
+import FormHelperText from "@mui/material/FormHelperText";
+import FormLabel from "@mui/material/FormLabel";
 import { useField, useFormikContext } from "formik";
-import { DatePicker, type DatePickerProps } from "@mui/x-date-pickers";
+// import { DatePicker, type DatePickerProps } from "@mui/x-date-pickers";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import type { DatePickerProps } from "@mui/x-date-pickers/DatePicker";
 
 interface Props extends DatePickerProps<any> {
   name: string;
@@ -32,7 +29,9 @@ const FormDate: React.FC<Props> = ({
 }) => {
   const { setFieldValue } = useFormikContext<any>();
   const [field, meta] = useField(name);
-  const [value, setValue] = React.useState<any>(dayjs(field.value) || null);
+  const [value, setValue] = React.useState<any>(
+    field.value ? dayjs(field.value, "DD/MM/YYYY") : null
+  );
   const { onChange, ...other } = field;
   const isError = Boolean(meta.touched && meta.error);
 

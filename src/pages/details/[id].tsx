@@ -26,38 +26,17 @@ import { getSession, useSession } from "next-auth/react";
 import { GetServerSideProps } from "next";
 import prisma from "@/lib/prisma";
 import FormDate from "@/components/FormikComponents/FormDate";
-import dayjs, { Dayjs } from "dayjs";
-
-const OutlineInputStyle = styled(OutlinedInput, { shouldForwardProp })(
-  ({ theme }) => ({
-    width: 350,
-    // marginLeft: 16,
-    paddingLeft: 16,
-    paddingRight: 16,
-    "& input": {
-      background: "transparent !important",
-      paddingLeft: "4px !important",
-    },
-    [theme.breakpoints.down("lg")]: {
-      width: 250,
-    },
-    [theme.breakpoints.down("md")]: {
-      width: "100%",
-      marginLeft: 4,
-      background: "#fff",
-    },
-  })
-);
 
 const validationSchema = Yup.object().shape({
   contractorId: Yup.string().optional(),
   contractorName: Yup.string().optional(),
   employeeid: Yup.string().optional(),
   designation: Yup.string().optional(),
-  attendance: Yup.number().optional(),
+  attendance: Yup.number().min(0).max(1),
   attendancedate: Yup.string().optional(),
   machineInTime: Yup.string().optional(),
   machineOutTime: Yup.string().optional(),
+  machineduration: Yup.string().optional(),
   machineshift: Yup.string().optional(),
   overtime: Yup.number().optional(),
   eleave: Yup.number().optional(),
@@ -65,9 +44,10 @@ const validationSchema = Yup.object().shape({
   manualouttime: Yup.string().optional(),
   manualshift: Yup.string().optional(),
   manualovertime: Yup.number().optional(),
-  mleave: Yup.number().optional(),
+  manualduration: Yup.string().optional(),
+  mleave: Yup.number().required("Required"),
   department: Yup.string().optional(),
-  gender: Yup.string().optional(),
+  gender: Yup.string().required("Required"),
   comment: Yup.string().required("Required"),
   uploadDocument: Yup.object().optional(),
 });
@@ -105,16 +85,15 @@ export default function EditTimkeeper({
     fetchTimeKeeper();
   }, [id]);
 
-  console.log(timekeeper);
-
   const initialValues = {
     contractorId: timekeeper?.contractorid || "",
     contractorName: timekeeper?.contractorname || "John Doe",
     employeeid: timekeeper?.employeeid || "",
     designation: timekeeper?.designation || "",
 
-    machineInTime: timekeeper?.machineInTime || "10:00",
-    machineOutTime: timekeeper?.machineOutTime || "18:00",
+    machineInTime: timekeeper?.machineInTime || "",
+    machineOutTime: timekeeper?.machineOutTime || "",
+    machineduration: timekeeper?.machineduration || "",
     machineshift: timekeeper?.machineshift || "Day",
     attendance: timekeeper?.attendance || 0,
     attendancedate: timekeeper?.attendancedate || "",
@@ -124,7 +103,8 @@ export default function EditTimkeeper({
     manualouttime: timekeeper?.manualouttime || "",
     manualshift: timekeeper?.manualshift || "",
     manualovertime: timekeeper?.manualovertime || "",
-    mleave: timekeeper?.mleave || "",
+    manualduration: timekeeper?.manualduration || "",
+    mleave: timekeeper?.mleave || timekeeper?.eleave || 0,
     department: timekeeper?.department || "",
     gender: timekeeper?.gender || "",
     comment: "",
@@ -168,15 +148,22 @@ export default function EditTimkeeper({
         <Formik
           initialValues={initialValues}
           validationSchema={validationSchema}
-          onSubmit={async (values, { setSubmitting }) => {
+          onSubmit={async (values, { setSubmitting, setErrors }) => {
             const {
               comment,
               uploadDocument,
               contractorId,
               contractorName,
+              attendance,
+              mleave,
               ...others
             } = values;
             setSubmitting(true);
+
+            if (values.attendance === "1" && values.mleave !== "0") {
+              setErrors({ mleave: "Manual Leave should be 0 nmmber" });
+              return;
+            }
             await axios
               .put("/api/timekeeper", {
                 id: id,
@@ -184,6 +171,8 @@ export default function EditTimkeeper({
                 comment,
                 userId: session?.user?.id,
                 userName: session?.user?.name,
+                attendance: values.attendance.toString(),
+                mleave: values.mleave.toString(),
                 role: role,
                 ...others,
               })
@@ -243,6 +232,14 @@ export default function EditTimkeeper({
                   </Grid>
                   <Grid item xs={12} sm={6} md={4}>
                     <FormInput
+                      name="machineduration"
+                      label="Machine Total Duration "
+                      placeHolder="Machine Total Duration"
+                      disabled={true}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6} md={4}>
+                    <FormInput
                       name="machineshift"
                       label="Machine Shift"
                       placeHolder="Machine Shift"
@@ -279,6 +276,7 @@ export default function EditTimkeeper({
                       label="Attendance"
                       placeHolder="Attendance"
                       disabled={false}
+                      type="number"
                     />
                   </Grid>
                   <Grid item xs={12} sm={6} md={4}>
@@ -302,6 +300,14 @@ export default function EditTimkeeper({
                       name="manualouttime"
                       label="Manual Out Time"
                       placeHolder="Manual Out Time"
+                      disabled={false}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6} md={4}>
+                    <FormInput
+                      name="manualduration"
+                      label="Manual Total Duration"
+                      placeHolder="Manual Total Duration"
                       disabled={false}
                     />
                   </Grid>
