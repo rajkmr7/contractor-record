@@ -17,6 +17,7 @@ function ImportData() {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [key, setKey] = useState(0);
 
   // submit
   const [excelData, setExcelData] = useState(null);
@@ -40,13 +41,7 @@ function ImportData() {
         console.log(data);
         importing(data);
       };
-      //   } else {
-      //     setExcelFileError("Please select only excel file types");
-      //     setExcelFile(null);
-      //   }
-      // } else {
-      //   console.log("plz select your file");
-      // }
+      setKey(key + 1);
     }
   };
 
@@ -92,23 +87,25 @@ function ImportData() {
   const importing = async (data: any) => {
     console.log(data);
 
-    const body = data.map((data: any) => ({
-      employeeId: data.employeeId,
-      employeename: data.employeeName,
-      contractorname: data.contractorname,
-      contractorId: data.contractorId,
-      designation: data.designation,
-      department: data.department,
-      gender: data.gender || "",
-      phone: data.phone?.toString() || "",
-      emailid: data.emailid || "",
-      basicsalary_in_duration: data.basicsalary_in_duration || "",
-      basicsalary: data.basicsalary || 0,
-      allowed_wrking_hr_per_day: data.allowed_wrking_hr_per_day || 0,
-      servicecharge: data.servicecharge || 0,
-      gst: data.gst || 0,
-      tds: data.tds || 0,
-    }));
+    const body = data
+      // .filter((d: any, i: number) => )
+      .map((data: any) => ({
+        employeeId: data.employeeId,
+        employeename: data.employeeName,
+        contractorname: data.contractorname,
+        contractorId: data.contractorId,
+        designation: data.designation,
+        department: data.department,
+        gender: data.gender || "",
+        phone: data.phone?.toString() || "",
+        emailid: data.emailid || "",
+        basicsalary_in_duration: data.basicsalary_in_duration || "",
+        basicsalary: data.basicsalary || 0,
+        allowed_wrking_hr_per_day: data.allowed_wrking_hr_per_day || 0,
+        servicecharge: data.servicecharge || 0,
+        gst: data.gst || 0,
+        tds: data.tds || 0,
+      }));
     setLoading(true);
     const res = await axios
       .post("/api/importdata?type=employee", body)
@@ -134,6 +131,7 @@ function ImportData() {
         )}
         <input
           hidden
+          key={key}
           type="file"
           className="form-control"
           onChange={handleFile}
