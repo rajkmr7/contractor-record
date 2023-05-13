@@ -27,7 +27,7 @@ import axios from "axios";
 import FormDate from "@/components/FormikComponents/FormDate";
 import FileUpload from "@/components/FormikComponents/FileUpload";
 
-const fileType = Yup.object().required("Required").optional();
+const fileType = Yup.string().optional();
 
 const validationSchema = Yup.object().shape({
   contractorId: Yup.string().required("Required"),
@@ -65,13 +65,13 @@ export default function AddWordOrder({
     alert1Month: workorder?.alert1Month || false,
     alert15days: workorder?.alert15days || false,
     amendmentDocument: workorder?.amendmentDocument
-      ? { newFilename: workorder.amendmentDocument }
+      ? workorder.amendmentDocument
       : undefined,
     addendumDocument: workorder?.addendumDocument
-      ? { newFilename: workorder.addendumDocument }
+      ? workorder.addendumDocument
       : undefined,
     uploadDocument: workorder?.uploadDocument
-      ? { newFilename: workorder.uploadDocument }
+      ? workorder.uploadDocument
       : undefined,
   };
 

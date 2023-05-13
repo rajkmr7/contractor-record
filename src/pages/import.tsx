@@ -14,11 +14,11 @@ const Upload = () => {
 
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("upload_preset", "contractor-record"); // Replace with your Cloudinary upload preset name
+    formData.append("upload_preset", "attendance-web"); // Replace with your Cloudinary upload preset name
     formData.append("resource_type", "raw");
 
     const response = await fetch(
-      "https://api.cloudinary.com/v1_1/dmsd3eeer/upload",
+      "https://api.cloudinary.com/v1_1/dddvmk9xs/upload",
       {
         method: "POST",
         body: formData,
@@ -26,15 +26,7 @@ const Upload = () => {
     );
 
     const result = await response.json();
-    console.log(result); // Handle the uploaded file here
-    // const url = result.url;
-    // const link = document.createElement("a");
-    // link.href = url;
-    // link.download = "finalsheet.docx";
-    // document.body.appendChild(link);
-    // link.click();
-    // document.body.removeChild(link);
-    // URL.revokeObjectURL(url);
+    console.log(result);
   }
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
