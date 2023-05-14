@@ -111,12 +111,12 @@ const FileUpload: React.FC<Props> = ({
 
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("upload_preset", "attendance-web"); // Replace with your Cloudinary upload preset name
+      formData.append("upload_preset", "contractor-record"); // Replace with your Cloudinary upload preset name
       formData.append("resource_type", "raw");
 
       try {
         const response = await fetch(
-          "https://api.cloudinary.com/v1_1/dddvmk9xs/upload",
+          "https://api.cloudinary.com/v1_1/dmsd3eeer/upload",
           {
             method: "POST",
             body: formData,
