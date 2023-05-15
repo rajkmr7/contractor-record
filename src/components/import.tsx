@@ -147,20 +147,9 @@ function ImportData({ contractors }: { contractors: Contractor[] }) {
       return;
     }
 
-    data.forEach((d: any, index: number) => {
-      console.log(d.machine_intime, d.machine_outtime);
-      const fractionalDay = d.machine_outtime; // Example fractional day value
-      const date = new Date();
-      date.setHours(fractionalDay * 24);
-      date.setMinutes((fractionalDay * 24 - date.getHours()) * 60);
-      const timeString = date.toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-      console.log(timeString);
-    });
     const convertTime = (time: number) => {
       const fractionalDay = time; // Example fractional day value
+      if (fractionalDay === 0) return "00:00";
       const date = new Date();
       date.setHours(fractionalDay * 24);
       date.setMinutes((fractionalDay * 24 - date.getHours()) * 60);
@@ -194,50 +183,40 @@ function ImportData({ contractors }: { contractors: Contractor[] }) {
       }
     };
 
+    const selected = contractors.find((c) => c.contractorId === contractor);
+
     const body = data.map((data: any) => {
       return {
-        contractorid: contractors.find((c) => c.contractorId === contractor)
-          ?.contractorId,
-        contractorname: contractors.find((c) => c.contractorId === contractor)
-          ?.contractorname,
+        contractorid: selected?.contractorId,
+        contractorname: selected?.contractorname,
         employeeid: _.get(data, "Employee Code")?.toString(),
         employeename: _.get(data, "Employee Name"),
         designation: data.Designation,
         department: data.Department,
-        machineInTime: _.get(data, "In Time")
-          ? _.get(data, "In Time") === 0
-            ? "00:00"
-            : convertTime(_.get(data, "In Time"))
-          : "Invalid Entry Time",
-        machineOutTime: _.get(data, "Out Time")
-          ? _.get(data, "Out Time") === 0
-            ? "00:00"
-            : convertTime(_.get(data, "Out Time"))
-          : "Invalid Entry Time",
+        machineInTime: _.get(data, "In Time", "00:00"),
+        machineOutTime: _.get(data, "Out Time", "00:00"),
         machineshift: _.get(data, "Shift Code") || "-",
         attendance: getAttendance(_.get(data, "Att Status")) || "0",
         attendancedate: getDate(_.get(data, "Attendance Date"))?.toString(),
-        overtime: _.get(data, "Over Time")
-          ? Math.floor(_.get(data, "Over Time") * 24).toString()
-          : "0",
-        machineduration: _.get(data, "Duration")
-          ? _.get(data, "Duration") === 0
-            ? "00:00"
-            : new Date(_.get(data, "Duration") * 24 * 60 * 60 * 1000)
-                .toLocaleTimeString("en-US", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  second: "2-digit",
-                  hour12: false,
-                  timeZone: "UTC", // or specify the time zone you want to display
-                })
-                ?.toString()
-          : "-",
+        overtime: _.get(data, "Over Time", "00:00").slice(0, 2),
+        machineduration: _.get(data, "Duration", "00:00"),
+        // machineduration: _.get(data, "Duration")
+        //   ? _.get(data, "Duration") === 0
+        //     ? "00:00"
+        //     : new Date(_.get(data, "Duration") * 24 * 60 * 60 * 1000)
+        //         .toLocaleTimeString("en-US", {
+        //           hour: "2-digit",
+        //           minute: "2-digit",
+        //           second: "2-digit",
+        //           hour12: false,
+        //           timeZone: "UTC", // or specify the time zone you want to display
+        //         })
+        //         ?.toString()
+        //   : "-",
         eleave: data.e_leave || "0",
-        gender: data.gender || "M",
+        gender: data.gender || "Male",
       };
     });
-    // console.log(body);
 
     setLoading(true);
     const res = await axios
@@ -252,15 +231,8 @@ function ImportData({ contractors }: { contractors: Contractor[] }) {
         setError(true);
         handleClick();
       });
-
     setLoading(false);
   };
-
-  console.log(openModal);
-
-  console.log(contractor);
-
-  // new Date(timeValue * 24 * 60 * 60 * 1000).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
   return (
     <Stack direction="row" alignItems="center" spacing={2}>
@@ -312,9 +284,9 @@ function ImportData({ contractors }: { contractors: Contractor[] }) {
           <Box sx={style}>
             <Stack spacing={3}>
               <FormControl>
-                <FormLabel>Select the Department</FormLabel>
+                <FormLabel>Select the Contractor</FormLabel>
                 <Select
-                  placeholder="Select the Department"
+                  placeholder="Select the Contractor"
                   value={contractor}
                   onChange={(e) => setContractor(e.target.value as string)}
                 >

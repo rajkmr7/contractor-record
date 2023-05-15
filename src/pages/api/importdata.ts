@@ -11,6 +11,14 @@ export default async function test (req: NextApiRequest, res: NextApiResponse) {
     const { type } = req.query
     if(type === "employee") {
        try {
+        const ids = data.map((employee: any) => employee.employeeId)
+        const deletedEmployees = await prisma.employee.deleteMany({
+            where : {
+                employeeId: {
+                    in: ids
+                }
+            }
+        })
         const employees = await prisma.employee.createMany({
             data: data,
             skipDuplicates: true
@@ -25,7 +33,14 @@ export default async function test (req: NextApiRequest, res: NextApiResponse) {
     }
 
     else if(type === "contractor") {
-        await prisma.employee.deleteMany()
+        const ids = data.map((contractor: any) => contractor.contractorId)
+        const deletedContractors = await prisma.contractor.deleteMany({
+            where : {
+                contractorId: {
+                    in: ids
+                }
+            }
+        })
         const contractors = await prisma.contractor.createMany({
             data: data,
             skipDuplicates: true
@@ -37,6 +52,26 @@ export default async function test (req: NextApiRequest, res: NextApiResponse) {
         const timekeepers = await prisma.timeKeeper.createMany({
             data: data,
             skipDuplicates: true
+        })
+
+        const employees = await prisma.employee.findMany({
+            where: {
+                gender: "Female"
+            },
+            select: {
+                employeeId: true
+            }
+        })
+
+        const updatedTimekeepers = await prisma.timeKeeper.updateMany({
+           data: {
+             gender: "Female"
+           },
+           where: {
+            employeeid: {
+                in: employees.map((employee) => employee.employeeId)
+            }
+           }
         })
         // const timeKeeper = await prisma.timeKeeper.create({
         //    data: data[0]
