@@ -7,6 +7,7 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import _ from "lodash";
+import { Department } from "@prisma/client";
 
 interface Data {
   date: string;
@@ -43,7 +44,7 @@ export default function FinalSheetTable({
   rows: Data[];
   total: number;
   sides: side[];
-  department: string;
+  department: Department | undefined;
   storededuction: number;
   safetydeduction: number;
 }) {
@@ -76,10 +77,7 @@ export default function FinalSheetTable({
     "Net Payable",
   ];
 
-  const colspan =
-    department === "8HR" || department === "12HR" || department === "COLONY"
-      ? 8
-      : 4;
+  const colspan = department ? 8 : 4;
 
   return (
     <Paper
@@ -116,9 +114,8 @@ export default function FinalSheetTable({
               <TableCell align="center" sx={{ fontWeight: "700" }} colSpan={1}>
                 Designation
               </TableCell>
-              {(department === "8HR" ||
-                department === "12HR" ||
-                department === "COLONY") && (
+              {department?.basicsalary_in_duration?.toLowerCase() ===
+                "hourly" && (
                 <TableCell
                   align="center"
                   sx={{ fontWeight: "700" }}
@@ -127,9 +124,7 @@ export default function FinalSheetTable({
                   Type
                 </TableCell>
               )}
-              {(department === "8HR" ||
-              department === "12HR" ||
-              department === "COLONY"
+              {(department?.basicsalary_in_duration?.toLowerCase() === "hourly"
                 ? headers
                 : ccmheader
               ).map((header, index) => (

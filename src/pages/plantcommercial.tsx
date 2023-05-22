@@ -16,7 +16,7 @@ import Typography from "@mui/material/Typography";
 import { GetServerSideProps } from "next";
 import { getSession } from "next-auth/react";
 import prisma from "@/lib/prisma";
-import { Contractor, Designations } from "@prisma/client";
+import { Contractor, Department, Designations } from "@prisma/client";
 import getTotalAmountAndRows from "@/utils/get8hr";
 import MonthSelect from "@/ui-component/MonthSelect";
 import dayjs, { Dayjs } from "dayjs";
@@ -54,9 +54,11 @@ export const FormSelect = ({
 export default function PlantCommercial({
   contractor,
   designations,
+  selectedDepartment,
 }: {
   contractor: Contractor;
   designations: Designations[];
+  selectedDepartment: Department;
 }) {
   const [value, setValue] = React.useState<string>(dayjs().format("MM/YYYY"));
   const [loading, setLoading] = React.useState(false);
@@ -96,7 +98,7 @@ export default function PlantCommercial({
       dayjs(value, "MM/YYYY").month() + 1,
       dayjs(value, "MM/YYYY").year(),
       designations,
-      department as string
+      selectedDepartment
     );
     setRows(rows);
     setTotal(total1);
@@ -188,9 +190,8 @@ export default function PlantCommercial({
                 TOTAL
               </TableCell>
             </TableRow>
-            {((department as string)?.toLowerCase() === "colony" ||
-              department === "8HR" ||
-              department === "12HR") && (
+            {selectedDepartment.basicsalary_in_duration?.toLowerCase() ===
+              "hourly" && (
               <TableRow>
                 {columns.map((column) => (
                   <TableCell
@@ -343,6 +344,12 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     },
   });
 
+  const selectedDepartment = await prisma.department.findFirst({
+    where: {
+      department: department as string,
+    },
+  });
+
   if (!contractor || !department) {
     return {
       redirect: {
@@ -356,6 +363,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     props: {
       contractor,
       designations,
+      selectedDepartment,
     },
   };
 };

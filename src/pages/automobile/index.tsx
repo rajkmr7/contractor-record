@@ -27,16 +27,22 @@ import {
   DialogTitle,
   InputAdornment,
   OutlinedInput,
+  Stack,
   styled,
 } from "@mui/material";
 import { useRouter } from "next/router";
 import { GetServerSideProps } from "next";
 import { getSession } from "next-auth/react";
 import prisma from "@/lib/prisma";
-import { Workorder } from "@prisma/client";
+import { Automobile, Contractor, Workorder } from "@prisma/client";
 import EnhancedTableHead from "@/components/Table/EnhancedTableHead";
 import axios from "axios";
 import Close from "@mui/icons-material/Close";
+import FormSelect from "@/ui-component/FormSelect";
+import dayjs, { Dayjs } from "dayjs";
+import MonthSelect from "@/ui-component/MonthSelect";
+import getAutomobile from "@/utils/getAutomobile";
+import _ from "lodash";
 
 const StyledSearch = styled(OutlinedInput)(({ theme }) => ({
   width: 300,
@@ -153,94 +159,60 @@ const createHeadCells = (
 };
 
 const headCells = [
-  createHeadCells("id", "Work Order Id", false, false),
-  createHeadCells("contractorname", "Contractor Name", false, false),
-  createHeadCells("nature", "Nature", false, true),
-  createHeadCells("startdate", "Start Date", false, false),
-  createHeadCells("enddate", "End Date", false, false),
-  createHeadCells("location", "Location", false, false),
-  createHeadCells("workdescription", "Work Descrition", false, false),
-  createHeadCells("repeatedOronetime", "Repeated Or one time", false, false),
-  createHeadCells("amendmentdocument", "Amendment Document", true, false),
-  createHeadCells("addendumDocument", "Addendum Document", false, false),
-  createHeadCells("document", "Document", false, false),
+  createHeadCells("date", "Date", false, false),
+  createHeadCells("openingMeterReading", "Opening Meter Reading", false, false),
+  createHeadCells("closingMeterReading", "Close Meter Reading", false, true),
+  createHeadCells("totalRunning", "Total Running", false, false),
+  createHeadCells(
+    "hsdIssuedOrConsumed",
+    "HSD Issued Or Consumed",
+    false,
+    false
+  ),
+  createHeadCells("maintenancetime", "Maintenance Time", false, false),
+  createHeadCells("breakdownTime", "Break Down Time", false, false),
+  createHeadCells(
+    "breakDownDaysCounted",
+    "Breakdown Days Counted",
+    false,
+    false
+  ),
+  createHeadCells(
+    "reasonBehindBreakDown",
+    "Reason Behind Breakdown",
+    true,
+    false
+  ),
+  createHeadCells("remarks", "Remarks", false, false),
+  createHeadCells("status", "Status", false, false),
 ];
-
-interface EnhancedTableProps {
-  numSelected: number;
-  onRequestSort: (
-    event: React.MouseEvent<unknown>,
-    property: keyof Data1
-  ) => void;
-  onSelectAllClick: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  order: Order;
-  orderBy: string;
-  rowCount: number;
-}
-
-// function EnhancedTableHead(props: EnhancedTableProps) {
-//   const {
-//     onSelectAllClick,
-//     order,
-//     orderBy,
-//     numSelected,
-//     rowCount,
-//     onRequestSort,
-//   } = props;
-//   const createSortHandler =
-//     (property: keyof Data1) => (event: React.MouseEvent<unknown>) => {
-//       onRequestSort(event, property);
-//     };
-
-//   return (
-//     <TableHead>
-//       <TableRow>
-//         <TableCell padding="checkbox">
-//           <Checkbox
-//             color="primary"
-//             indeterminate={numSelected > 0 && numSelected < rowCount}
-//             checked={rowCount > 0 && numSelected === rowCount}
-//             onChange={onSelectAllClick}
-//             inputProps={{
-//               "aria-label": "select all desserts",
-//             }}
-//           />
-//         </TableCell>
-//         {headCells1.map((headCell) => (
-//           <TableCell
-//             key={headCell.id}
-//             align={"center"}
-//             padding={headCell.disablePadding ? "none" : "normal"}
-//             sortDirection={orderBy === headCell.id ? order : false}
-//             sx={{ fontWeight: "700" }}
-//           >
-//             <TableSortLabel
-//               active={orderBy === headCell.id}
-//               direction={orderBy === headCell.id ? order : "asc"}
-//               onClick={createSortHandler(headCell.id as keyof Data1)}
-//             >
-//               {headCell.label}
-//               {orderBy === headCell.id ? (
-//                 <Box component="span" sx={visuallyHidden}>
-//                   {order === "desc" ? "sorted descending" : "sorted ascending"}
-//                 </Box>
-//               ) : null}
-//             </TableSortLabel>
-//           </TableCell>
-//         ))}
-//       </TableRow>
-//     </TableHead>
-//   );
-// }
 
 interface EnhancedTableToolbarProps {
   numSelected: number;
   filtername: string;
   setFilterName: React.Dispatch<React.SetStateAction<string>>;
+  contractors: Contractor[];
+  workorders: Workorder[];
+  contractor: string | undefined;
+  setContractor: React.Dispatch<React.SetStateAction<string | undefined>>;
+  workorder: string | undefined;
+  setWorkorder: React.Dispatch<React.SetStateAction<string | undefined>>;
+  month: string;
+  monthChange: (value: Dayjs | null) => void;
 }
 
 function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
-  const { numSelected, filtername, setFilterName } = props;
+  const {
+    numSelected,
+    contractor,
+    setContractor,
+    contractors,
+    workorder,
+    setWorkorder,
+    workorders,
+    month,
+    monthChange,
+  } = props;
 
   return (
     <Toolbar
@@ -268,16 +240,33 @@ function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
           {numSelected} selected
         </Typography>
       ) : (
-        <StyledSearch
-          value={filtername}
-          onChange={(e) => setFilterName(e.target.value)}
-          placeholder="Search Workorder..."
-          startAdornment={
-            <InputAdornment position="start">
-              <Search />
-            </InputAdornment>
-          }
-        />
+        // <StyledSearch
+        //   value={filtername}
+        //   onChange={(e) => setFilterName(e.target.value)}
+        //   placeholder="Search Workorder..."
+        //   startAdornment={
+        //     <InputAdornment position="start">
+        //       <Search />
+        //     </InputAdornment>
+        //   }
+        // />
+        <Stack direction="row" alignItems="center" spacing={2}>
+          <FormSelect
+            label="Contractor"
+            value={contractor as string}
+            // onChange={(e) => setContractor(e.target.value as string)}
+            handleChange={(e) => setContractor(e as string)}
+            options={contractors.map((contractor) => ({
+              label: contractor.contractorname,
+              value: contractor.contractorId,
+            }))}
+          />
+          <MonthSelect
+            label="Select Date"
+            value={dayjs(month, "MM/YYYY")}
+            onChange={monthChange}
+          />
+        </Stack>
       )}
       {numSelected > 0 ? (
         <Tooltip title="Delete">
@@ -296,7 +285,13 @@ function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
   );
 }
 
-export default function Employees({ workorder }: { workorder: Workorder[] }) {
+export default function Vehiclelogbook({
+  workorders,
+  contractors,
+}: {
+  workorders: Workorder[];
+  contractors: Contractor[];
+}) {
   const [selected, setSelected] = React.useState<readonly string[]>([]);
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
@@ -307,15 +302,24 @@ export default function Employees({ workorder }: { workorder: Workorder[] }) {
   const [selectedWorkorder, setSelectedWorkorder] = React.useState<
     string | undefined
   >(undefined);
+  const [month, setMonth] = React.useState<string>(dayjs().format("MM/YYYY"));
+  const [automobiles, setAutomobiles] = React.useState<Automobile[]>([]);
+  const [rows, setRows] = React.useState<any[]>([]);
 
   const handleClose = () => {
     setOpen(false);
     setSelectedWorkorder(undefined);
   };
+  const [contractor, setContractor] = React.useState<string | undefined>(
+    contractors.length > 0 ? contractors[0].contractorId : undefined
+  );
+  const [workorder, setWorkOrder] = React.useState<string | undefined>(
+    rows.length > 0 ? workorders[0].id : undefined
+  );
 
   const handleSelectAllClick = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.checked) {
-      const newSelected = workorder.map((n) => n.contractorName);
+      const newSelected = workorders.map((n) => n.contractorName);
       setSelected(newSelected);
       return;
     }
@@ -373,9 +377,28 @@ export default function Employees({ workorder }: { workorder: Workorder[] }) {
     setLoading(false);
   };
 
+  const fetchAutomobiles = async () => {
+    const res = await axios.get(
+      `/api/vehiclelogbook?month=${month}&contractor=${contractor}`
+    );
+    setAutomobiles(res.data);
+    const r = getAutomobile(
+      res.data,
+      dayjs(month, "MM/YYYY").month() + 1,
+      dayjs(month, "MM/YYYY").year()
+    );
+    setRows(r);
+  };
+
+  console.log(rows);
+
+  React.useEffect(() => {
+    fetchAutomobiles();
+  }, [contractor, month]);
+
   // Avoid a layout jump when reaching the last page with empty rows.
   const emptyRows =
-    page > 0 ? Math.max(0, (1 + page) * rowsPerPage - workorder.length) : 0;
+    page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
 
   return (
     <Box sx={{ width: "100%" }}>
@@ -384,6 +407,16 @@ export default function Employees({ workorder }: { workorder: Workorder[] }) {
           numSelected={selected.length}
           filtername={filterName}
           setFilterName={setFilterName}
+          contractors={contractors}
+          workorders={workorders}
+          contractor={contractor}
+          setContractor={setContractor}
+          workorder={workorder}
+          setWorkorder={setWorkOrder}
+          month={month}
+          monthChange={(value: Dayjs | null) =>
+            setMonth(value?.format("MM/YYYY") || "")
+          }
         />
         <TableContainer
           sx={{
@@ -407,16 +440,18 @@ export default function Employees({ workorder }: { workorder: Workorder[] }) {
             <EnhancedTableHead
               numSelected={selected.length}
               onSelectAllClick={handleSelectAllClick}
-              rowCount={workorder.length}
+              rowCount={rows.length}
               headCells={headCells}
+              nocheckbox={true}
+              align="center"
             />
             <TableBody>
-              {workorder
-                .filter((employee) =>
-                  employee.contractorName
-                    .toLowerCase()
-                    .includes(filterName.toLowerCase())
-                )
+              {rows
+                // .filter((employee) =>
+                //   employee.contractorName
+                //     .toLowerCase()
+                //     .includes(filterName.toLowerCase())
+                // )
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((row, index) => {
                   const isItemSelected = isSelected(row.id as string);
@@ -425,103 +460,32 @@ export default function Employees({ workorder }: { workorder: Workorder[] }) {
                   return (
                     <TableRow
                       hover
-                      role="checkbox"
+                      // role="checkbox"
                       aria-checked={isItemSelected}
                       tabIndex={-1}
                       key={row.id}
                       selected={isItemSelected}
                       sx={{ cursor: "pointer" }}
                     >
-                      <TableCell padding="checkbox">
-                        <Checkbox
-                          onClick={(event) =>
-                            handleClick(event, row.id as string)
-                          }
-                          color="primary"
-                          checked={isItemSelected}
-                          inputProps={{
-                            "aria-labelledby": labelId,
-                          }}
-                        />
-                      </TableCell>
-                      <TableCell
-                        id={labelId}
-                        scope="row"
-                        padding="none"
-                        align="center"
-                        sx={{ minWidth: 150 }}
-                      >
-                        {row.id}
-                      </TableCell>
-                      <TableCell align="center" sx={{ minWidth: 150 }}>
-                        {row.contractorName}
-                      </TableCell>
-                      <TableCell align="center" sx={{ minWidth: 150 }}>
-                        {row.nature}
-                      </TableCell>
-                      <TableCell align="center" sx={{ minWidth: 150 }}>
-                        {row.startDate}
-                      </TableCell>
-                      <TableCell align="center" sx={{ minWidth: 150 }}>
-                        {row.endDate}
-                      </TableCell>
-                      <TableCell align="center" sx={{ minWidth: 150 }}>
-                        {row.location}
-                      </TableCell>
-                      <TableCell align="center" sx={{ minWidth: 150 }}>
-                        {row.workDescription}
-                      </TableCell>
-                      <TableCell align="center" sx={{ minWidth: 150 }}>
-                        {row.repeatOrOneTime}
-                      </TableCell>
-
-                      <TableCell
-                        onClick={() => {
-                          router.push(
-                            `/uploadedFiles/${row.amendmentDocument}`
-                          );
-                        }}
-                        align="center"
-                        sx={{ minWidth: 150 }}
-                      >
-                        View Document
-                      </TableCell>
-                      <TableCell
-                        onClick={() => {
-                          router.push(`/uploadedFiles/${row.addendumDocument}`);
-                        }}
-                        align="center"
-                        sx={{ minWidth: 150 }}
-                      >
-                        View Document
-                      </TableCell>
-                      <TableCell
-                        onClick={() => {
-                          router.push(`/uploadedFiles/${row.uploadDocument}`);
-                        }}
-                        align="center"
-                        sx={{ minWidth: 150 }}
-                      >
-                        View Document
-                      </TableCell>
+                      <TableCell padding="checkbox"></TableCell>
+                      {headCells.map((cell, index) => (
+                        <TableCell
+                          id={labelId}
+                          scope="row"
+                          padding="none"
+                          align="center"
+                          sx={{ minWidth: 150 }}
+                        >
+                          {_.get(row, cell.id, "-")}
+                        </TableCell>
+                      ))}
 
                       <TableCell size="small" align="center">
                         <IconButton
-                          onClick={() => router.push(`/workorder/${row.id}`)}
+                          onClick={() => router.push(`/workorders/${row.id}`)}
                           sx={{ m: 0 }}
                         >
                           <Edit fontSize="small" />
-                        </IconButton>
-                      </TableCell>
-                      <TableCell size="small" align="center">
-                        <IconButton
-                          onClick={() => {
-                            setOpen(true);
-                            setSelectedWorkorder(row.id);
-                          }}
-                          sx={{ m: 0 }}
-                        >
-                          <DeleteIcon fontSize="small" />
                         </IconButton>
                       </TableCell>
                     </TableRow>
@@ -538,7 +502,7 @@ export default function Employees({ workorder }: { workorder: Workorder[] }) {
         <TablePagination
           rowsPerPageOptions={[5, 10, 25]}
           component="div"
-          count={workorder.length}
+          count={rows.length}
           rowsPerPage={rowsPerPage}
           page={page}
           onPageChange={handleChangePage}
@@ -583,7 +547,7 @@ export default function Employees({ workorder }: { workorder: Workorder[] }) {
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const session = await getSession({ req: context.req });
 
-  const workorder = await prisma.workorder.findMany();
+  const workorders = await prisma.workorder.findMany();
   if (!session) {
     return {
       redirect: {
@@ -592,6 +556,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       },
     };
   }
+  const contractors = await prisma.contractor.findMany();
   const user = await prisma.user.findUnique({
     where: {
       email: session?.user?.email as string,
@@ -608,7 +573,8 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   }
   return {
     props: {
-      workorder,
+      workorders,
+      contractors,
     },
   };
 };

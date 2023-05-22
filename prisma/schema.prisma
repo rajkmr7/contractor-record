@@ -102,12 +102,7 @@ model TimeKeeper {
      @@unique([attendancedate, employeeid])
 }
 
-enum Status {
-  Approved
-  Pending
-  Rejected
-  NoChanges
-}
+
 
 model Contractor {
   id   String   @id @default(cuid())
@@ -280,6 +275,7 @@ model Workorder {
 model Department {
   id    String   @id @default(cuid())
   department  String
+   basicsalary_in_duration String?
   designations   Designations[]
 }
 
@@ -317,6 +313,8 @@ model Upload {
   timekeeperId  String
   timekeeper         TimeKeeper     @relation(fields: [timekeeperId], references: [id], onDelete: Cascade)
 }
+
+
 
 model Stores {
   id   String   @id @default(cuid())
@@ -363,6 +361,34 @@ model SafetyItem {
   safety   Safety   @relation(fields: [safetyId], references: [id], onDelete: Cascade)
 }
 
+model Automobile{
+    id String @id @default(cuid())
+    contractorId String
+    workorderId String
+    date String?
+    openingMeterReading Int?
+    closingMeterReading Int?
+    startTime String?
+    endTime String?
+    totalRunning Int?
+    unit String?
+    hsdIssuedOrConsumed Int?
+    mainetenaceTime String?
+    breakdownTime String?
+    breakDownDaysCounted Int?
+    reasonBehindBreakDown String?
+    remarks String?
+    status Status @default(Pending)
+    rejectionReason String?
+}
+
+enum Status {
+  Approved
+  Pending
+  Rejected
+  NoChanges
+}
+
 
 
 enum Role {
@@ -375,4 +401,5 @@ enum Role {
   Admin
   Stores
   Safety
+  Automobile
 }
