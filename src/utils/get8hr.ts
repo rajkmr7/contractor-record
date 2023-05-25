@@ -15,6 +15,7 @@ const  totalovertime1: Record<string, string | number>  = {
 }
 const attendancecount: Record<string, string | number> = {
   date: "Attendance Count",
+  total: 0,
 }
 const totalamount1: Record<string, string | number> = {
   date: "Total Amount",
@@ -129,6 +130,7 @@ if(designations) {
       
     const id = designation.designationid
     attendancecount[id] = filtered.length + filtered1.length / 2
+    attendancecount["total"] = attendancecount.total as number + Number(_.get(attendancecount, id, 0))
     
     rate[id] = designation.basicsalary
     if(designation.basicsalary_in_duration === "Monthly") {
@@ -160,7 +162,7 @@ if(designations) {
  })
 }
 
-attendancecount["total"] = timekeeper.length
+// attendancecount["total"] = timekeeper.length
 rate["total"] = 0
 totalnetamount["total"] = parseInt(totalamount1.total as string) + parseInt(otamount.total as string)
 total["total"] = totalnetamount.total + parseInt(cpamount.total as string)

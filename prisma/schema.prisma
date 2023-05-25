@@ -180,8 +180,19 @@ model Contractor {
   upload_doc2      String?
   employee        Employee[] 
   safety         Safety[]
+  bills         bills[]
   stores        Stores[]
  
+}
+
+model bills {
+  id    String    @id @default(cuid())
+  contractorname   String
+  contractorId    String
+  month           String
+  amount          Int
+  document       String
+  contractor         Contractor     @relation(fields: [contractorId], references: [contractorId], onDelete: Cascade)
 }
 
 model Employee {
@@ -196,7 +207,7 @@ model Employee {
     emailid String?
     basicsalary_in_duration String
     basicsalary Int
-	allowed_wrking_hr_per_day Int
+	  allowed_wrking_hr_per_day Int
     servicecharge Float?
     gst Float?
     tds Float?

@@ -1,5 +1,5 @@
 {
-  "name": "attendance-web",
+  "name": "contractor-record",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -20,6 +20,7 @@
     "@next-auth/prisma-adapter": "^1.0.5",
     "@next/bundle-analyzer": "^13.4.2",
     "@prisma/client": "^4.11.0",
+    "@react-pdf/renderer": "^3.1.9",
     "@tanstack/react-query": "^4.29.7",
     "@trpc/client": "^10.26.0",
     "@trpc/next": "^10.26.0",

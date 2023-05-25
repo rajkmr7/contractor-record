@@ -77,7 +77,8 @@ export default function FinalSheetTable({
     "Net Payable",
   ];
 
-  const colspan = department ? 8 : 4;
+  const colspan =
+    department?.basicsalary_in_duration?.toLowerCase() === "hourly" ? 8 : 4;
 
   return (
     <Paper

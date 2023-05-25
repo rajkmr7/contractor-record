@@ -23,6 +23,16 @@ import dayjs, { Dayjs } from "dayjs";
 import axios from "axios";
 import _ from "lodash";
 import { useRouter } from "next/router";
+import BackupIcon from "@mui/icons-material/Backup";
+import {
+  Alert,
+  Button,
+  CircularProgress,
+  IconButton,
+  Snackbar,
+  Tooltip,
+} from "@mui/material";
+import Close from "@mui/icons-material/Close";
 
 export const FormSelect = ({
   value,
@@ -64,6 +74,14 @@ export default function PlantCommercial({
   const [loading, setLoading] = React.useState(false);
   const [rows, setRows] = React.useState<Record<string, string | number>[]>([]);
   const [total, setTotal] = React.useState(0);
+  const [bill, setBill] = React.useState(undefined);
+  const [file, setFile] = React.useState<File | undefined>(undefined);
+  const [loadingbill, setLoadingBill] = React.useState(false);
+  const [open, setOpen] = React.useState(false);
+
+  const handleClose = () => {
+    setOpen(false);
+  };
 
   const router = useRouter();
   const colspan = designations.length > 2 ? 3 : 1;
@@ -82,9 +100,54 @@ export default function PlantCommercial({
     };
   });
 
-  columns.push(...extra);
+  const action = (
+    <React.Fragment>
+      <IconButton
+        size="small"
+        aria-label="close"
+        color="inherit"
+        onClick={handleClose}
+      >
+        <Close fontSize="small" />
+      </IconButton>
+    </React.Fragment>
+  );
 
-  console.log(rows);
+  const handleChange = async (file: File) => {
+    setLoadingBill(true);
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", "contractor-record"); // Replace with your Cloudinary upload preset name
+    formData.append("resource_type", "raw");
+
+    try {
+      const response = await fetch(
+        "https://api.cloudinary.com/v1_1/dmsd3eeer/upload",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      const result = await response.json();
+
+      const body = {
+        contractorId: contractor.contractorId,
+        contractorname: contractor.contractorname,
+        month: value,
+        amount: total + sgst + sgst - (contractor.servicecharge || 0),
+        document: result.secure_url,
+      };
+      const res = await axios.post("/api/uploadbill", body);
+      setOpen(true);
+    } catch (error) {
+      console.log(error);
+    }
+    setLoadingBill(false);
+  };
+
+  columns.push(...extra);
 
   columns.push({ id: "total", label: "Total", minWidth: 60 });
 
@@ -125,6 +188,20 @@ export default function PlantCommercial({
           mb: 2,
         }}
       >
+        <Snackbar
+          open={open}
+          autoHideDuration={6000}
+          onClose={handleClose}
+          action={action}
+        >
+          <Alert
+            onClose={handleClose}
+            severity={"success"}
+            sx={{ width: "100%" }}
+          >
+            {"Bill Uploaded Successfully"}
+          </Alert>
+        </Snackbar>
         <Grid container spacing={2}>
           <Grid item xs={12} md={3}>
             <MonthSelect
@@ -145,6 +222,28 @@ export default function PlantCommercial({
           <Typography variant="h4" sx={{ width: "20rem" }}>
             Department : <span style={{ fontWeight: "500" }}>{department}</span>
           </Typography>
+          <Tooltip title="Upload Bills">
+            <Button
+              // onClick={() => uploadBill()}
+              variant="contained"
+              component="label"
+              disabled={loadingbill}
+            >
+              Upload
+              {loadingbill && (
+                <CircularProgress size={15} sx={{ ml: 1, color: "#364152" }} />
+              )}
+              <input
+                type="file"
+                hidden
+                onChange={(e) => {
+                  if (e.target.files) {
+                    handleChange(e.target.files[0]);
+                  }
+                }}
+              />
+            </Button>
+          </Tooltip>
         </Stack>
       </Box>
 

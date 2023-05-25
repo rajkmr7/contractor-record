@@ -14,7 +14,7 @@ const Upload = () => {
 
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("upload_preset", "attendance-web"); // Replace with your Cloudinary upload preset name
+    formData.append("upload_preset", "contractor-record"); // Replace with your Cloudinary upload preset name
     formData.append("resource_type", "raw");
 
     const response = await fetch(
