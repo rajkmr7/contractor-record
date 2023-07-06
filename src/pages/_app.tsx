@@ -1,4 +1,6 @@
-import MainLayout from "@/layout/MainLayout";
+// import MainLayout from "@/layout/MainLayout";
+import dynamic from "next/dynamic";
+const MainLayout = dynamic(() => import("@/layout/MainLayout"));
 import { store } from "@/store";
 import theme from "@/themes";
 import {
@@ -77,6 +79,13 @@ export default function App({
                 <Component {...pageProps} />
               </MainLayout>
             )}
+            {/* {router.pathname === "/login" || router.pathname === "/register" ? (
+              <Component {...pageProps} />
+            ) : (
+              <MainLayout>
+                <Component {...pageProps} />
+              </MainLayout>
+            )} */}
           </ThemeProvider>
         </StyledEngineProvider>
       </SessionProvider>

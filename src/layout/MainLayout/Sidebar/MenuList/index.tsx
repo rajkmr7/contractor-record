@@ -1,10 +1,10 @@
 // material-ui
-import { Typography } from "@mui/material";
+// import { Typography } from "@mui/material";
+import Typography from "@mui/material/Typography";
 
 // project imports
 import NavGroup from "./NavGroup";
 import {
-  menuItems,
   adminItems,
   timekeeperItems,
   hritems,
@@ -13,6 +13,7 @@ import {
   plantCommercialItems,
   storeitems,
   safetyitems,
+  automobileItems,
 } from "@/components/menu-items";
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
@@ -36,6 +37,8 @@ const MenuList = () => {
     else if (session?.user?.role === "HoCommercialAuditor")
       items = hoitems.items;
     else if (session?.user?.role === "Corporate") items = corporatorItems.items;
+    else if (session?.user?.role === "Automobile")
+      items = automobileItems.items;
     else items = timekeeperItems.items;
 
     const navItems1 = items?.map((item) => {
